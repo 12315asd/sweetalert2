@@ -1,15 +1,18 @@
 module.exports = {
   debug: true,
+  dryRun: true,
   verifyConditions: [
-    '@semantic-release/changelog',
   ],
   prepare: [
-    '@semantic-release/changelog',
   ],
   publish: [
     {
       'path': '@semantic-release/exec',
       'cmd': 'node release ${nextRelease.version}'
     }
+  ],
+  success: [
+  ],
+  fail: [
   ]
 }

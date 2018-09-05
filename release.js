@@ -19,9 +19,18 @@ assert.ok(semver.valid(version), 'Must specify the valid semver version, e.g. 1.
 
 ;(async () => {
   log('Doing sanity checks...')
-  const { currentBranch: branchToPublish, isCleanWorkingTree } = await getGitStatus()
+  let { currentBranch: branchToPublish, isCleanWorkingTree } = await getGitStatus()
   if (!dryRun) {
-    assert.equal(branchToPublish, 'master', 'Must be on master branch')
+    if (isCi) {
+      branchToPublish = process.env.TRAVIS_BRANCH
+      log(`CI, switching to ${branchToPublish}...`)
+      await execute(`git checkout ${branchToPublish}`)
+
+      log(`CI, cleaning working tree on ${branchToPublish}...`)
+      await execute('git checkout .')
+    } else {
+      assert.equal(branchToPublish, 'master', 'Must be on master branch')
+    }
   }
   assert.equal(isCleanWorkingTree, true, 'Must have clean working tree')
 
@@ -38,13 +47,7 @@ assert.ok(semver.valid(version), 'Must specify the valid semver version, e.g. 1.
   await removeDir('dist')
 
   log('Switching to the dist branch...')
-  await execute('git checkout dist')
-
-  log('Pulling the latest dist branch from Github...')
-  await execute('git pull origin')
-
-  log(`Merging from "${branchToPublish}" branch...`)
-  await execute(`git merge --strategy-option=theirs ${branchToPublish}`)
+  await execute('yarn switch-to-dist')
 
   log('Installing npm dependencies...')
   await execute('yarn')
@@ -52,8 +55,10 @@ assert.ok(semver.valid(version), 'Must specify the valid semver version, e.g. 1.
   log('Running the build...')
   await execute('npm run build')
 
-  log('Running the checks...')
-  await execute('npm run check')
+  if (!isCi) {
+    log('Running the checks...')
+    await execute('npm run check')
+  }
 
   if (dryRun) {
     log('Skipping publishing on npm...')
@@ -81,8 +86,8 @@ assert.ok(semver.valid(version), 'Must specify the valid semver version, e.g. 1.
   } else {
     log('Pushing to Github both master and dist branches...')
     if (isCi) {
-      await execute('git config --global user.email "travis@travis-ci.org"')
-      await execute('git config --global user.name "Travis CI"')
+      await execute('git config --global user.email "semantic-release-bot@martynus.net"')
+      await execute('git config --global user.name "semantic-release-bot"')
       await execute(`git remote set-url origin https://${process.env.GH_TOKEN}@github.com/sweetalert2/sweetalert2.git`)
     }
     await execute('git push origin master:master dist:dist --tags')

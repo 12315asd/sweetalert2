@@ -7,6 +7,19 @@ addons:
   firefox: latest
   chrome: stable
 
+# Add npm token to publish the package with `yarn release` command
+# https://npme.npmjs.com/docs/workflow/travis.html#now-that-you-have-a-token
+before_ install:
+  - printf "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+
+
+# This is needed for the release script, namely for git checkout dist
+# https://stackoverflow.com/a/47441734
+install:
+  - git config remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
+  - git fetch --unshallow --tags
+  - yarn
+
 script:
   # xvfb-run is needed for headless testing with real browsers
   - if [[ "$TRAVIS_EVENT_TYPE" != "cron"  ]]; then
@@ -23,7 +36,9 @@ notifications:
     on_success: never
 
 after_success:
-  - yarn release
+  - if [[ "$TRAVIS_BRANCH" = "master" ]]; then
+      yarn release;
+    fi;
   - cat ./coverage/lcov.info | coveralls
   - zip -r coverage.zip coverage
   - curl --upload-file ./coverage.zip https://transfer.sh/coverage.zip

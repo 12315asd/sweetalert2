@@ -11,7 +11,6 @@
     "@babel/core": "^7.0.0",
     "@babel/plugin-transform-object-assign": "^7.0.0",
     "@babel/preset-env": "^7.0.0",
-    "@semantic-release/changelog": "^3.0.0",
     "@semantic-release/exec": "^3.1.2",
     "babel-loader": "^8.0.0",
     "babel-plugin-array-includes": "^2.0.3",
@@ -109,7 +108,8 @@
     "check:wappalyzer": "curl 'https://api.wappalyzer.com/lookup-basic/v1/?url=https%3A%2F%2Fsweetalert2.github.io' 2>&1 | grep --quiet 'SweetAlert2'",
     "check:unpkg": "curl --location 'https://unpkg.com/sweetalert2' 2>&1 | grep --quiet 'window.Swal'",
     "check:jsdelivr": "curl --location 'https://cdn.jsdelivr.net/npm/sweetalert2' 2>&1 | grep --quiet 'window.Swal'",
-    "release": "semantic-release"
+    "switch-to-dist": "git fetch && git checkout . && git checkout -B dist origin/dist && git merge --strategy-option=theirs master",
+    "release": "yarn switch-to-dist && semantic-release"
   },
   "bugs": "https://github.com/sweetalert2/sweetalert2/issues",
   "license": "MIT"
